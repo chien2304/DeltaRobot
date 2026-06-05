@@ -1,0 +1,53 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.venv/
+env/
+
+# Database / runtime data
+*.db
+*.sqlite
+*.sqlite3
+
+# Captured images / history data
+captures/
+uploads/
+history/
+data/
+
+# Environment / secrets
+.env
+*.env
+
+# Build / cache
+dist/
+build/
+.cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+web_backend/node_modules/
+web_backend/data/
+vision_service/__pycache__/
+vision_service/.venv/
+vision_service/venv/
+firmware_build/
+cloudflared/
+ultralytics_config/
+*.errors.txt
+*.log

@@ -1,0 +1,23 @@
+{
+  "L": 130.0,
+  "l": 233.0,
+  "R": 46.942,
+  "r": 23.311,
+  "CONVEYOR_SPEED": 21.7,
+  "UART_DELAY": 0.085,
+  "Z_CONVEYOR": -231.5,
+  "CENTER_X": 72.0,
+  "CENTER_Y": -161.998,
+  "STABLE_FRAMES": 27,
+  "Z_SAFE_PICK": 20.0,
+  "Z_SAFE_DROP": 20.0,
+  "HE_SO_GAP": 109.998,
+  "HE_SO_THA": 90.0,
+  "BLEND_ALPHA": 0.35,
+  "TRAY_CENTER": [
+    14.702,
+    52.802,
+    -220.002
+  ],
+  "TRAY_SERVO_OFFSET": -5.0
+}

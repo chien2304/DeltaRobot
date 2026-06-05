@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Delta Robot Dashboard</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div id="login-page" class="login-page">
+        <div class="login-card">
+            <h1>Delta Robot</h1>
+            <p>Đăng nhập hệ thống</p>
+
+            <input id="username" placeholder="Username" value="admin">
+            <input id="password" placeholder="Password" type="password" value="admin123">
+
+            <button onclick="login()">Đăng nhập</button>
+            <div id="login-error" class="error"></div>
+
+            <div class="hint">
+                admin/admin123: điều khiển<br>
+                guest/guest123: chỉ xem
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboard" class="dashboard hidden">
+        <div id="emergency-banner" class="emergency-banner hidden">
+            <div>
+                <b>EMERGENCY STOP!</b>
+                Robot đã dừng khẩn cấp. Vui lòng kiểm tra khu vực robot rồi nhấn Reset.
+            </div>
+            <button class="danger admin-only operator-control" onclick="resetEmergency()">Reset Emergency</button>
+        </div>
+
+        <header>
+            <div class="brand-block">
+                <span class="brand-mark" aria-hidden="true"></span>
+                <h1>Delta Robot Dashboard</h1>
+            </div>
+            <div class="header-actions">
+                <span id="operator-lock-info" class="operator-lock-info"></span>
+                <button id="operator-lock-btn" class="admin-only" onclick="toggleOperatorLock()">Take Control</button>
+                <span id="user-info"></span>
+                <button onclick="logout()">Đăng xuất</button>
+            </div>
+        </header>
+
+        <nav class="tabs" aria-label="Main views">
+            <button class="tab-btn active" data-tab="operation" onclick="showTab('operation')">
+                Operation
+            </button>
+            <button class="tab-btn" data-tab="history" onclick="showTab('history')">
+                History
+            </button>
+            <button class="tab-btn" data-tab="analytics" onclick="showTab('analytics')">
+                Analytics
+            </button>
+            <button class="tab-btn admin-only" data-tab="settings" onclick="showTab('settings')">
+                Settings
+            </button>
+            <button class="tab-btn admin-only" data-tab="maintenance" onclick="showTab('maintenance')">
+                Maintenance
+            </button>
+        </nav>
+
+        <section id="tab-operation" class="tab-page active">
+            <main>
+                <section class="left">
+                    <div class="card">
+                        <h2>Camera</h2>
+                        <img id="camera" src="/video_feed" alt="Camera stream">
+                    </div>
+
+                    <div class="card">
+                        <h2>ROI Control</h2>
+
+                        <div class="roi-grid">
+                            <label>X1 <input id="roi-x1" class="operator-control" type="number" step="1" oninput="scheduleRoiUpdate()"></label>
+                            <label>Y1 <input id="roi-y1" class="operator-control" type="number" step="1" oninput="scheduleRoiUpdate()"></label>
+                            <label>X2 <input id="roi-x2" class="operator-control" type="number" step="1" oninput="scheduleRoiUpdate()"></label>
+                            <label>Y2 <input id="roi-y2" class="operator-control" type="number" step="1" oninput="scheduleRoiUpdate()"></label>
+                        </div>
+
+                        <div id="roi-status" class="small-status">ROI tự cập nhật khi thay đổi giá trị.</div>
+                    </div>
+
+                    <div class="card">
+                        <h2>UART Log</h2>
+                        <pre id="uart-log"></pre>
+                    </div>
+                </section>
+
+                <section class="right">
+                    <div class="card">
+                        <h2>Điều khiển</h2>
+
+                        <div class="row">
+                            <select id="com-port" class="operator-control">
+                                <option value="">Đang tải COM...</option>
+                            </select>
+                            <button onclick="refreshComPorts()">Refresh COM</button>
+                            <button id="connect-btn" class="admin-only operator-control" onclick="toggleUartConnection()">Connect</button>
+                        </div>
+
+                        <div class="controls">
+                            <button class="admin-only operator-control" onclick="home()">Home</button>
+                            <button class="admin-only operator-control start" onclick="start()">Start</button>
+                            <button class="admin-only operator-control stop" onclick="stop()">Stop</button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h2>Trạng thái</h2>
+                        <div id="state-box"></div>
+                    </div>
+
+                    <div class="card">
+                        <h2>Event Log</h2>
+                        <pre id="event-log"></pre>
+                    </div>
+                </section>
+            </main>
+        </section>
+
+        <section id="tab-history" class="tab-page">
+            <div class="card">
+                <div class="card-title-row">
+                    <h2>Lịch sử gắp</h2>
+                    <button onclick="exportHistoryPackage()">Export History</button>
+                </div>
+
+                <div id="pick-summary" class="pick-summary"></div>
+                <div id="pick-history" class="pick-history"></div>
+            </div>
+        </section>
+
+        <section id="tab-analytics" class="tab-page">
+            <div class="analytics-grid">
+                <div class="card chart-card">
+                    <div class="card-title-row">
+                        <h2>Thời gian 20 lần gắp gần nhất</h2>
+                        <span id="time-chart-note" class="chart-note"></span>
+                    </div>
+                    <canvas id="pick-time-chart" width="900" height="320"></canvas>
+                </div>
+
+                <div class="card chart-card">
+                    <div class="card-title-row">
+                        <h2>Bản đồ nhiệt vị trí gắp</h2>
+                        <span id="heatmap-note" class="chart-note"></span>
+                    </div>
+                    <canvas id="pick-heatmap" width="900" height="460"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-settings" class="tab-page">
+            <div class="card">
+                <div class="card-title-row">
+                    <h2>Settings</h2>
+                    <button class="admin-only operator-control" onclick="saveSettings()">Save Settings</button>
+                </div>
+
+                <div class="settings-note">
+                    Settings được lưu vào <b>config_runtime.json</b> và được áp dụng ngay cho các lần tính tiếp theo.
+                </div>
+
+                <div class="settings-grid">
+                    <div class="settings-group">
+                        <h3>Robot Geometry</h3>
+                        <label>L <input id="set-L" type="number" step="0.001"></label>
+                        <label>l <input id="set-l" type="number" step="0.001"></label>
+                        <label>R <input id="set-R" type="number" step="0.001"></label>
+                        <label>r <input id="set-r" type="number" step="0.001"></label>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Conveyor</h3>
+                        <label>Conveyor speed <input id="set-CONVEYOR_SPEED" type="number" step="0.001"></label>
+                        <label>UART delay <input id="set-UART_DELAY" type="number" step="0.001"></label>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Camera Transform</h3>
+                        <label>Z conveyor <input id="set-Z_CONVEYOR" type="number" step="0.001"></label>
+                        <label>Center X <input id="set-CENTER_X" type="number" step="0.001"></label>
+                        <label>Center Y <input id="set-CENTER_Y" type="number" step="0.001"></label>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Detection</h3>
+                        <label>Stable frames <input id="set-STABLE_FRAMES" type="number" step="1"></label>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Motion</h3>
+                        <label>Z safe pick <input id="set-Z_SAFE_PICK" type="number" step="0.001"></label>
+                        <label>Z safe drop <input id="set-Z_SAFE_DROP" type="number" step="0.001"></label>
+                        <label>Pick speed factor <input id="set-HE_SO_GAP" type="number" step="0.001"></label>
+                        <label>Drop speed factor <input id="set-HE_SO_THA" type="number" step="0.001"></label>
+                        <label>Blend alpha <input id="set-BLEND_ALPHA" type="number" step="0.001"></label>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Tray</h3>
+                        <label>Tray center X <input id="set-TRAY_CENTER_X" type="number" step="0.001"></label>
+                        <label>Tray center Y <input id="set-TRAY_CENTER_Y" type="number" step="0.001"></label>
+                        <label>Tray center Z <input id="set-TRAY_CENTER_Z" type="number" step="0.001"></label>
+                        <label>Servo offset <input id="set-TRAY_SERVO_OFFSET" type="number" step="0.001"></label>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-maintenance" class="tab-page">
+            <div class="maintenance-grid">
+                <div class="card">
+                    <h2>Vacuum Test</h2>
+                    <div class="controls">
+                        <button class="admin-only operator-control start" onclick="testVacuum(true)">Vacuum ON</button>
+                        <button class="admin-only operator-control stop" onclick="testVacuum(false)">Vacuum OFF</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Tray Servo Test</h2>
+                    <div class="controls">
+                        <button class="admin-only operator-control" onclick="testServo(0)">Servo 0°</button>
+                        <button class="admin-only operator-control" onclick="testServo(90)">Servo 90°</button>
+                        <button class="admin-only operator-control" onclick="testServo(180)">Servo 180°</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Jog Axis ±5°</h2>
+
+                    <div class="jog-grid">
+                        <div>Axis 1</div>
+                        <button class="admin-only operator-control" onclick="jogAxis(1, 'up')">+5°</button>
+                        <button class="admin-only operator-control" onclick="jogAxis(1, 'down')">-5°</button>
+
+                        <div>Axis 2</div>
+                        <button class="admin-only operator-control" onclick="jogAxis(2, 'up')">+5°</button>
+                        <button class="admin-only operator-control" onclick="jogAxis(2, 'down')">-5°</button>
+
+                        <div>Axis 3</div>
+                        <button class="admin-only operator-control" onclick="jogAxis(3, 'up')">+5°</button>
+                        <button class="admin-only operator-control" onclick="jogAxis(3, 'down')">-5°</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Raw UART Command</h2>
+                    <div class="row">
+                        <input id="raw-uart-command" class="operator-control" placeholder="Ví dụ: C hoặc S|G90|D300">
+                        <button class="admin-only operator-control" onclick="sendRawUart()">Send</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/app.js"></script>
+</body>
+</html>
